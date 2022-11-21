@@ -1,4 +1,4 @@
-/* * Data converted from /home/yuan/esp/video_test/build/esp-idf/mbedtls/x509_crt_bundle
+/* * Data converted from /home/yuan/esp/hmiv3_touch_panel_test/build/esp-idf/mbedtls/x509_crt_bundle
  */
 .data
 .section .rodata.embedded

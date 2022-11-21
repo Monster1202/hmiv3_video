@@ -1,4 +1,4 @@
-# Install script for directory: /home/yuan/esp/video_test/components/file_system
+# Install script for directory: /home/yuan/esp/hmiv3_touch_panel_test/components/file_system
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)

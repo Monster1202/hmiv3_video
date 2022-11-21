@@ -96,8 +96,9 @@ int len_decoder(char *recv_buf,int recv_len,int head_len)
 static int http_perform_as_stream_reader(void *sbuffer,void *output_buffer)
 {
     //char output_buffer[MAX_HTTP_OUTPUT_BUFFER] = {0};   // Buffer to store response of http request
-    //char *buffer = malloc(MAX_HTTP_RECV_BUFFER + 1);
-    char *buffer[MAX_HTTP_RECV_BUFFER] = {0};
+    char *buffer = malloc(MAX_HTTP_RECV_BUFFER + 1);
+    //assert(buffer != NULL);
+    //char *buffer[MAX_HTTP_RECV_BUFFER] = {0};
     if (buffer == NULL) {
         ESP_LOGE(TAG, "Cannot malloc http receive buffer");
         return;
@@ -121,7 +122,7 @@ static int http_perform_as_stream_reader(void *sbuffer,void *output_buffer)
     static int counter = 0;
     if(counter%600 == 0)
         ESP_LOGI(TAG, "content_length:%d", content_length);
-    content_length = 104;//306;  //105 104
+    content_length = 104;//306;  62;//
     int total_read_len = 0, read_len;
     int head_len = 0;
     read_len = esp_http_client_read(client, buffer, content_length);// header
@@ -136,16 +137,16 @@ static int http_perform_as_stream_reader(void *sbuffer,void *output_buffer)
     //content_length = 500;  //in case  len_decoder = 0 read error
     content_length = len_decoder(buffer,read_len,head_len);  //size
     esp_http_client_read(client, sbuffer, content_length);   //frame_data
-    Data data_send;
-    BaseType_t xStatus;
-    const TickType_t xTicksToWait = pdMS_TO_TICKS(50);
-    data_send.sender = content_length;
-    data_send.msg = heap_caps_malloc(TRANSFER_BUFFER, MALLOC_CAP_SPIRAM |  MALLOC_CAP_8BIT);
-    memcpy(data_send.msg, sbuffer, content_length); 
-    xStatus = xQueueSendToFront( xqueue2, &data_send, xTicksToWait );
+    // Data data_send;
+    // BaseType_t xStatus;
+    // const TickType_t xTicksToWait = pdMS_TO_TICKS(50);
+    // data_send.sender = content_length;
+    // data_send.msg = heap_caps_malloc(TRANSFER_BUFFER, MALLOC_CAP_SPIRAM |  MALLOC_CAP_8BIT);
+    // memcpy(data_send.msg, sbuffer, content_length); 
+    // xStatus = xQueueSendToFront( xqueue2, &data_send, xTicksToWait );
     
     // int count_draw =0;
-    //mjpegdraw(sbuffer, content_length, output_buffer, lcd_write_bitmap);
+    mjpegdraw(sbuffer, content_length, output_buffer, lcd_write_bitmap);
     //     ESP_LOGI(TAG1,"count_draw:%d", count_draw++);
     
     counter++;
@@ -159,21 +160,21 @@ static int http_perform_as_stream_reader(void *sbuffer,void *output_buffer)
 
     esp_http_client_close(client);
     esp_http_client_cleanup(client);
-    //free(buffer);
+    free(buffer);
     return content_length;
 }
 
 void http_test_task(void *pvParameters)
 {
-    //  uint8_t *lcd_buffer = (uint8_t *)heap_caps_malloc(DEMO_MAX_TRANFER_SIZE, MALLOC_CAP_DMA | MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
-    //  assert(lcd_buffer != NULL);
+    uint8_t *lcd_buffer = (uint8_t *)heap_caps_malloc(DEMO_MAX_TRANFER_SIZE, MALLOC_CAP_DMA | MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
+    assert(lcd_buffer != NULL);
     ESP_LOGI(TAG, "START http example");
     vTaskDelay(5000 / portTICK_RATE_MS); 
     print_heapsize();
     //xqueue2 = xQueueCreate( 1, sizeof(Data));
     while(1)
     {    
-        http_perform_as_stream_reader(pvParameters,0);   
+        http_perform_as_stream_reader(pvParameters,lcd_buffer);   
         vTaskDelay(40 / portTICK_RATE_MS);     //50ms   14FPS   
     }           
 }

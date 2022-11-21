@@ -36,13 +36,19 @@
 //#include "esp32_perfmon.h"
 
 #include "ota_app.h"
+#include "touch_panel.h"
+#include "bat_adc.h"
+#include "lcd_icon.h"
 
 static const char *TAG = "main";
 
-#define BOOT_ANIMATION_MAX_SIZE (130 * 1024)  //80 will cause mqtt init error
+#define BOOT_ANIMATION_MAX_SIZE (80 * 1024)  //80 will cause mqtt init error
+
 //esp_err_t esp_lcd_panel_draw_bitmap(esp_lcd_panel_handle_t panel, int x_start, int y_start, int x_end, int y_end, const void *color_data)
 _Bool lcd_write_bitmap(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint8_t *data)
 {
+    // x += 743;
+    // y += 34;
     esp_lcd_panel_draw_bitmap(lcd_panel, x, y, x + w, y + h,  (uint16_t *)data);
     return true;
 }
@@ -63,30 +69,66 @@ void app_main(void)
     /* Initialize LCD */
     ESP_ERROR_CHECK(bsp_lcd_init());
     lcd_clear_fast(lcd_panel, COLOR_BLACK);
-    // lcd_draw_picture_t(lcd_panel);
+    //lcd_draw_picture_test(lcd_panel);
+    //lcd_draw_picture_t(lcd_panel);
     //xTaskCreatePinnedToCore(Task1, "Task1", 4096, NULL, 1, NULL,  0);
 
     para_init();
     gpio_init();
+
+    xTaskCreatePinnedToCore(touch_input, "touch_input", 4096, NULL, 10, NULL,  0);
+    xTaskCreatePinnedToCore(lcd_icon_task, "lcd_icon_task", 8192, NULL, 11, NULL,  0);
     wifi_connect();
     //xTaskCreate(wifi_scan, "wifi_scan", 4096, NULL, 6, NULL);
     uint8_t *jpeg_buf = heap_caps_malloc(BOOT_ANIMATION_MAX_SIZE, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
     assert(jpeg_buf != NULL);
 
-    xTaskCreatePinnedToCore(lcd_draw, "lcd_draw", 10240, NULL, 23, NULL,  1);  //(void *)(lcd_buffer)
+    //xTaskCreatePinnedToCore(lcd_draw, "lcd_draw", 10240, NULL, 23, NULL,  1);  //(void *)(lcd_buffer)
     xTaskCreatePinnedToCore(http_test_task, "http_test_task", 10240, (void *)(jpeg_buf), 24, NULL,  0);
 
+
+// #if 1
+//     esp_vfs_spiffs_conf_t spiffs_config = {
+//         .base_path              = "/spiffs",
+//         .partition_label        = NULL,
+//         .max_files              = 5,
+//         .format_if_mount_failed = false
+//     };
+
+//     ESP_ERROR_CHECK(esp_vfs_spiffs_register(&spiffs_config));
+
+//     // uint8_t *jpeg_buf = heap_caps_malloc(BOOT_ANIMATION_MAX_SIZE, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+//     // assert(jpeg_buf != NULL);
+//     uint8_t *lcd_buffer = (uint8_t *)heap_caps_malloc(DEMO_MAX_TRANFER_SIZE, MALLOC_CAP_DMA | MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
+//     assert(lcd_buffer != NULL);
+//     for (size_t i = 82; i <= 82; i += 2) 
+//     {
+//         char file_name[64] = {0};
+//         sprintf(file_name, "/spiffs/r%03d.jpg", i);
+//         FILE *fd = fopen(file_name, "r");
+//         int read_bytes = fread(jpeg_buf, 1, BOOT_ANIMATION_MAX_SIZE, fd);
+//         fclose(fd);
+//         mjpegdraw(jpeg_buf, read_bytes, lcd_buffer, lcd_write_bitmap);
+//         ESP_LOGD(TAG, "file_name: %s, fd: %p, read_bytes: %d, free_heap: %d", file_name, fd, read_bytes, esp_get_free_heap_size());
+//     }
+//     free(lcd_buffer);
+//     //free(jpeg_buf);
+// #endif
     native_ota_app();
     mqtt_init();
     //uint16_t *pixels = heap_caps_malloc((640 * 12) * sizeof(uint16_t), MALLOC_CAP_8BIT | MALLOC_CAP_INTERNAL);
     //perfmon_start(); //print cpu usage
-    int cnt = 0;
+    uint16_t cnt = 0;
+    adc_init();
     while (1) {
         
         // lcd_draw_picture_t(lcd_panel,pixels);
         // vTaskDelay(20 / portTICK_RATE_MS);
         // cnt++;
         // if(cnt % 200 == 1)
+        cnt = adc_get_voltage();
+        parameter_write_battery(cnt);
+        printf("bat=%d\r\n",cnt);
         print_heapsize();
         vTaskDelay(20000 / portTICK_RATE_MS);
         /* task monitor code if necessary */

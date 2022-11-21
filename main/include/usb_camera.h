@@ -15,6 +15,8 @@ extern "C" {
 #define CONFIG_LCD_BUF_HIGHT (48/HIGHT_PLUS)  //48   8/2 mohu
 _Bool lcd_write_bitmap(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint8_t *data);
 void print_heapsize(void);
+void lcd_icon_task(void);
+void spiff_init(void);
 /* USB Camera Descriptors Related MACROS,
 the quick demo skip the standred get descriptors process,
 users need to get params from camera descriptors from PC side,

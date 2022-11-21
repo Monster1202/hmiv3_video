@@ -1,4 +1,4 @@
-# Install script for directory: /home/yuan/esp/video_test/components/bsp
+# Install script for directory: /home/yuan/esp/hmiv3_touch_panel_test/components/bsp
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)

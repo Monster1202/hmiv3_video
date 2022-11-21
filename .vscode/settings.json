@@ -1,5 +1,12 @@
 {
     "idf.adapterTargetName": "esp32s3",
     "idf.flashType": "UART",
-    "idf.port": "/dev/ttyUSB0"
+    "idf.port": "/dev/ttyUSB0",
+    "files.associations": {
+        "ft5x06.h": "c",
+        "bat_adc.h": "c",
+        "jpegd2.h": "c",
+        "para_list.h": "c",
+        "mqtt_app.h": "c"
+    }
 }
