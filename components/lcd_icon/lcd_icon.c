@@ -5,6 +5,7 @@
 #include "usb_camera.h"
 #include "para_list.h"
 #include "esp_spiffs.h"
+#include "bat_adc.h"
 
 #define icon1_x 663
 #define icon1_y 25
@@ -29,6 +30,14 @@ void jpg_icon_draw(void *jpg_b,void *lcd_b,size_t i,uint32_t x_0,uint32_t y_0,ui
     mjpegdraw_icon(jpg_b, read_bytes, lcd_b, lcd_write_bitmap,x_0,y_0,width,hight); //x0 y0 hight width
     ESP_LOGD(TAG, "file_name: %s, fd: %p, read_bytes: %d, free_heap: %d", file_name, fd, read_bytes, esp_get_free_heap_size());
 }
+
+void bat_adc_get(void)
+{
+    static int battery = 0;
+    battery = adc_get_voltage();
+    parameter_write_battery(battery);
+    printf("bat=%d\r\n",battery);
+}
 void lcd_icon_task(void)
 {
     // parameter_read_centralizer();
@@ -43,7 +52,8 @@ void lcd_icon_task(void)
     assert(jpg_buffer != NULL);
     uint8_t *lcd_buffer = (uint8_t *)heap_caps_malloc(ICON_SIZE, MALLOC_CAP_DMA | MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
     assert(lcd_buffer != NULL);
-
+    adc_init();
+    int cnt = 0;
     while(1){
         get_remote_parameter(&remote_buf);
         if(remote_buf.wifi_connection != former_state.wifi_connection){
@@ -101,20 +111,20 @@ void lcd_icon_task(void)
                 jpg_icon_draw(jpg_buffer,lcd_buffer,130,icon2_x,icon3_y,34,34); //rotation  
             }
         }
-        if(remote_buf.pressure_alarm != former_state.pressure_alarm){
-            if(remote_buf.pressure_alarm == 0){
-                jpg_icon_draw(jpg_buffer,lcd_buffer,144,icon2_x,330,18,18); //senser-pressure
-            }
-            else if(remote_buf.pressure_alarm == 1){
-                jpg_icon_draw(jpg_buffer,lcd_buffer,142,icon2_x,330,18,18); //senser-pressure 0   
-            }
-        }
         if(remote_buf.water != former_state.water){
             if(remote_buf.water == 1){
-                jpg_icon_draw(jpg_buffer,lcd_buffer,144,icon2_x,380,18,18); //senser-water 
+                jpg_icon_draw(jpg_buffer,lcd_buffer,144,icon2_x,330,18,18); //senser-water 
             }
             else if(remote_buf.water == 0){
-                jpg_icon_draw(jpg_buffer,lcd_buffer,142,icon2_x,380,18,18); //senser-water   
+                jpg_icon_draw(jpg_buffer,lcd_buffer,142,icon2_x,330,18,18); //senser-water   
+            }
+        }
+        if(remote_buf.pressure_alarm != former_state.pressure_alarm){
+            if(remote_buf.pressure_alarm == 0){
+                jpg_icon_draw(jpg_buffer,lcd_buffer,144,icon2_x,380,18,18); //senser-pressure
+            }
+            else if(remote_buf.pressure_alarm == 1){
+                jpg_icon_draw(jpg_buffer,lcd_buffer,142,icon2_x,380,18,18); //senser-pressure 0   
             }
         }
         if(remote_buf.sta_brush != former_state.sta_brush){
@@ -130,6 +140,10 @@ void lcd_icon_task(void)
         }
         get_remote_parameter(&former_state);
         vTaskDelay(100 / portTICK_RATE_MS);
+        cnt++;
+        if(cnt % 200 == 1){
+            bat_adc_get();
+        }
     }
     free(lcd_buffer);
     free(jpg_buffer);

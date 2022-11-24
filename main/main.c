@@ -40,6 +40,8 @@
 #include "bat_adc.h"
 #include "lcd_icon.h"
 
+
+
 static const char *TAG = "main";
 
 #define BOOT_ANIMATION_MAX_SIZE (80 * 1024)  //80 will cause mqtt init error
@@ -55,9 +57,12 @@ _Bool lcd_write_bitmap(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint8_t *
 
 void print_heapsize(void) 
 {
+    int memory_internal_heap = esp_get_free_internal_heap_size();
     printf("esp_get_free_heap_size = %d\n", esp_get_free_heap_size());
-    printf("esp_get_free_internal_heap_size = %d\n", esp_get_free_internal_heap_size());
+    printf("esp_get_free_internal_heap_size = %d\n", memory_internal_heap);
     printf("esp_get_minimum_free_heap_size = %d\n", esp_get_minimum_free_heap_size());
+    if(memory_internal_heap<=5000)
+        esp_restart();
 }
 
 void app_main(void)
@@ -79,12 +84,12 @@ void app_main(void)
     xTaskCreatePinnedToCore(touch_input, "touch_input", 4096, NULL, 10, NULL,  0);
     xTaskCreatePinnedToCore(lcd_icon_task, "lcd_icon_task", 8192, NULL, 11, NULL,  0);
     wifi_connect();
-    //xTaskCreate(wifi_scan, "wifi_scan", 4096, NULL, 6, NULL);
+    xTaskCreate(wifi_scan, "wifi_scan", 4096, NULL, 6, NULL);
     uint8_t *jpeg_buf = heap_caps_malloc(BOOT_ANIMATION_MAX_SIZE, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
     assert(jpeg_buf != NULL);
 
     //xTaskCreatePinnedToCore(lcd_draw, "lcd_draw", 10240, NULL, 23, NULL,  1);  //(void *)(lcd_buffer)
-    xTaskCreatePinnedToCore(http_test_task, "http_test_task", 10240, (void *)(jpeg_buf), 24, NULL,  0);
+    xTaskCreatePinnedToCore(http_test_task, "http_test_task", 10240, (void *)(jpeg_buf), 24, NULL,  1);
 
 
 // #if 1
@@ -119,23 +124,35 @@ void app_main(void)
     //uint16_t *pixels = heap_caps_malloc((640 * 12) * sizeof(uint16_t), MALLOC_CAP_8BIT | MALLOC_CAP_INTERNAL);
     //perfmon_start(); //print cpu usage
     uint16_t cnt = 0;
-    adc_init();
+    //adc_init();
     while (1) {
         
         // lcd_draw_picture_t(lcd_panel,pixels);
         // vTaskDelay(20 / portTICK_RATE_MS);
         // cnt++;
         // if(cnt % 200 == 1)
-        cnt = adc_get_voltage();
-        parameter_write_battery(cnt);
-        printf("bat=%d\r\n",cnt);
+        // cnt = adc_get_voltage();
+        // parameter_write_battery(cnt);
+        // printf("bat=%d\r\n",cnt);
         print_heapsize();
         vTaskDelay(20000 / portTICK_RATE_MS);
         /* task monitor code if necessary */
     }
 }
 
+// #include "esp_heap_trace.h"
+// #define NUM_RECORDS 100
+// static heap_trace_record_t trace_record[NUM_RECORDS]; // This buffer must be in internal RAM
+//     ESP_ERROR_CHECK( heap_trace_init_standalone(trace_record, NUM_RECORDS) );
+// void some_function()
+// {
+//     ESP_ERROR_CHECK( heap_trace_start(HEAP_TRACE_LEAKS) );
 
+//     //do_something_you_suspect_is_leaking();
+
+//     ESP_ERROR_CHECK( heap_trace_stop() );
+//     heap_trace_dump();
+// }
 
 
 

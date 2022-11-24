@@ -293,6 +293,7 @@ void parameter_write_water(uint8_t value)
 {   
     brush_para.water = value;
     blister_para.water = value;
+    remote_para.water = value;
 }
 
 uint8_t parameter_read_water(void)
@@ -312,6 +313,7 @@ void parameter_write_pressure_alarm(uint8_t value)
 {   
     brush_para.pressure_alarm = value;
     blister_para.pressure_alarm = value;
+    remote_para.pressure_alarm = value;
 }
 
 uint8_t parameter_read_pressure_alarm(void)

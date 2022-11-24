@@ -305,6 +305,8 @@ void mjpegdraw(uint8_t *mjpegbuffer, uint32_t size, uint8_t *outbuffer, lcd_writ
             //frame_send(y,outbuffer);
             //printf("y=%d, index_last=%d\n", y, index_last);
             index_last = 0;
+            for(int i = 0;i<3000;)
+                i++;
         }
     }
 

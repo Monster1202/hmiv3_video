@@ -26,6 +26,8 @@
 #include "gpio_ctrl.h"
 #include "wifi_sta.h"
 
+
+
 #define TOPIC_TIMESTAMP "/timestamp"
 #define TOPIC_EMERGENCY_CONTROL "/emergency-control"
 #define TOPIC_DEVICE_REGISTER "/device-register"
@@ -39,7 +41,7 @@
 //PARAMETER_BRUSH brush_para;
 #define DEVICE_TYPE_REMOTE
 
-//char data_pub_1[300] = {0};
+//char data_pub_1[500] = {0};
 static const char *TAG = "MQTT_EXAMPLE";
 esp_mqtt_client_handle_t mqtt_client;
 static uint16_t buf_disconnect = 0;
@@ -76,6 +78,7 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
     int msg_id;
      
     char data_pub_1[300] = "init";
+    //memset(data_pub_1,0,sizeof(data_pub_1));
     switch ((esp_mqtt_event_id_t)event_id) {
     case MQTT_EVENT_CONNECTED:
         parameter_write_wifi_connection(3);
@@ -132,10 +135,13 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
         ESP_LOGI(TAG, "DATA=%.*s\r", event->data_len, event->data);
         data_process(event->data);
 
-#ifdef DEVICE_TYPE_REMOTE      
-        data_publish(data_pub_1,9); 
-        msg_id = esp_mqtt_client_publish(client, TOPIC_REMOTE_STATES, data_pub_1, 0, 1, 0);
-        ESP_LOGI(TAG, "sent publish successful, msg_id=%d", msg_id);
+#ifdef DEVICE_TYPE_REMOTE     
+        //char *str_topic = "/timestamp";
+        if(event->topic_len<=12){
+            data_publish(data_pub_1,9); 
+            msg_id = esp_mqtt_client_publish(client, TOPIC_REMOTE_STATES, data_pub_1, 0, 1, 0);
+            ESP_LOGI(TAG, "sent publish successful, msg_id=%d", msg_id);
+        }
 #endif 
         buf_disconnect = 0;
         break;
@@ -203,11 +209,19 @@ void data_process(char *data)
         cJSON_Delete(json_str_xy);
         return 0;
     }
-
+    cJSON *json_brush_water = cJSON_GetObjectItem(json_str_xy, "water");
+    if(json_brush_water != NULL && json_brush_water->type == cJSON_Number) {
+        ESP_LOGI(TAG, "json_brush_water = %d", json_brush_water->valueint);
+        parameter_write_water(json_brush_water->valueint);
+    }
+    cJSON *json_brush_pressure = cJSON_GetObjectItem(json_str_xy, "pressure_alarm");
+    if(json_brush_pressure != NULL && json_brush_pressure->type == cJSON_Number) {
+        ESP_LOGI(TAG, "json_brush_pressure = %d", json_brush_pressure->valueint);
+        parameter_write_pressure_alarm(json_brush_pressure->valueint);
+    }
     cJSON *json_brush_status = cJSON_GetObjectItem(json_str_xy, "status");
     if(json_brush_status != NULL && json_brush_status->type == cJSON_Number) {
         ESP_LOGI(TAG, "status = %d", json_brush_status->valueint);
-        //remote_stop_io_out(json_brush_status->valueint,1);
         parameter_write_sta_brush(json_brush_status->valueint);
     }
     //parameter_write_sta_brush
@@ -295,7 +309,7 @@ void device_states_publish(uint8_t button)
 {
     int msg_id = 0;
     char data_pub_1[300] = "init";
-
+    //memset(data_pub_1,0,sizeof(data_pub_1));
 #ifdef DEVICE_TYPE_REMOTE
     switch(button)
     {
@@ -316,59 +330,16 @@ void device_states_publish(uint8_t button)
 
 void data_publish(char *data,uint8_t case_pub)
 {
-    PARAMETER_BRUSH brush_buf = {0};
-    get_parameter(&brush_buf);
-
-    PARAMETER_BLISTER blister_buf = {0};
-    get_blister_parameter(&blister_buf);
 
     PARAMETER_REMOTE remote_buf = {0};
     get_remote_parameter(&remote_buf);
 
-    cJSON*root = cJSON_CreateObject();
-    if(case_pub == 0){
-        cJSON_AddItemToObject(root, "device_sn",cJSON_CreateString(brush_buf.uuid));
-        cJSON_AddNumberToObject(root, "timestamp",brush_buf.timestamp);
-        cJSON_AddItemToObject(root, "device_type",cJSON_CreateString("PNEUMATIC_BRUSH"));
-        cJSON_AddItemToObject(root, "device_version",cJSON_CreateString(brush_buf.version));
-        }
-    else if(case_pub == 1){
-        cJSON_AddNumberToObject(root, "status",brush_buf.status);
-        cJSON_AddNumberToObject(root, "water",brush_buf.water);
-        cJSON_AddNumberToObject(root, "pressure_alarm",brush_buf.pressure_alarm);
-        cJSON_AddNumberToObject(root, "nozzle",brush_buf.nozzle);
-        cJSON_AddNumberToObject(root, "centralizer",brush_buf.centralizer);
-        cJSON_AddNumberToObject(root, "rotation",brush_buf.rotation);
-        cJSON_AddNumberToObject(root, "emergency_stop",brush_buf.emergency_stop);  
-        cJSON_AddNumberToObject(root, "temperature",brush_buf.temperature); 
-        cJSON_AddNumberToObject(root, "rssi",brush_buf.rssi);           
-        cJSON_AddNumberToObject(root, "timestamp",brush_buf.timestamp);
-        cJSON_AddItemToObject(root, "msg_id",cJSON_CreateString(brush_buf.msg_id)); 
-        }
-    else if(case_pub == 2){
-        cJSON_AddItemToObject(root, "device_sn",cJSON_CreateString(blister_buf.uuid));
-        cJSON_AddNumberToObject(root, "timestamp",blister_buf.timestamp);
-        cJSON_AddItemToObject(root, "device_type",cJSON_CreateString("PARAMETER_BLISTER"));
-        cJSON_AddItemToObject(root, "device_version",cJSON_CreateString(blister_buf.version));
-        }
-    else if(case_pub == 3){
-        cJSON_AddNumberToObject(root, "status",blister_buf.status);
-        cJSON_AddNumberToObject(root, "water",blister_buf.water);
-        cJSON_AddNumberToObject(root, "pressure_alarm",blister_buf.pressure_alarm);
-        cJSON_AddNumberToObject(root, "liquid_alarm",blister_buf.liquid_alarm);
-        cJSON_AddNumberToObject(root, "mode",blister_buf.mode);
-        cJSON_AddNumberToObject(root, "heater",blister_buf.heater);
-        cJSON_AddNumberToObject(root, "emergency_stop",blister_buf.emergency_stop);  
-        cJSON_AddNumberToObject(root, "temperature",blister_buf.temperature);   
-        cJSON_AddNumberToObject(root, "rssi",blister_buf.rssi);        
-        cJSON_AddNumberToObject(root, "timestamp",blister_buf.timestamp);
-        cJSON_AddItemToObject(root, "msg_id",cJSON_CreateString(blister_buf.msg_id)); //
-        }
-    else if(case_pub == 4){
+    cJSON *root = cJSON_CreateObject();
+
+    if(case_pub == 4){
         char string_uuid[20] = "0";//7cdfa1e592e0
         hex2str((uint8_t *)remote_buf.uuid,6,string_uuid);
         cJSON_AddItemToObject(root, "device_sn",cJSON_CreateString(string_uuid));
-        //cJSON_AddNumberToObject(root, "device_sn",);
         cJSON_AddNumberToObject(root, "timestamp",remote_buf.timestamp);
         cJSON_AddItemToObject(root, "device_type",cJSON_CreateString("PARAMETER_REMOTE"));
         cJSON_AddItemToObject(root, "device_version",cJSON_CreateString(remote_buf.version));
@@ -397,6 +368,7 @@ void data_publish(char *data,uint8_t case_pub)
     char *msg = cJSON_Print(root);
     ESP_LOGI(TAG, "%s",msg); 
     strcpy(data,msg);
+    free(msg);
     cJSON_Delete(root);
 }
 

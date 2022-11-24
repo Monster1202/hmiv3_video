@@ -64,17 +64,20 @@ void centralizer_io_out(uint8_t value)
         // gpio_set_level(GPIO_OUTPUT_LED_1, 1);
         // gpio_set_level(GPIO_OUTPUT_LED_2, 0);
         parameter_write_centralizer(1);
-        ESP_LOGI(TAG, "remote_para.centralizer = 1");}
+        //ESP_LOGI(TAG, "remote_para.centralizer = 1");
+        }
     else if(value == 2){
         // gpio_set_level(GPIO_OUTPUT_LED_1, 0);
         // gpio_set_level(GPIO_OUTPUT_LED_2, 1);
         parameter_write_centralizer(2);
-        ESP_LOGI(TAG, "remote_para.centralizer = 2");}
+        //ESP_LOGI(TAG, "remote_para.centralizer = 2");
+        }
     else{
         // gpio_set_level(GPIO_OUTPUT_LED_1, 0);
         // gpio_set_level(GPIO_OUTPUT_LED_2, 0);
         parameter_write_centralizer(0);
-        ESP_LOGI(TAG, "remote_para.centralizer = 0");}
+        //ESP_LOGI(TAG, "remote_para.centralizer = 0");
+        }
 }
 void rotation_io_out(uint8_t value)
 {
@@ -82,17 +85,20 @@ void rotation_io_out(uint8_t value)
         // gpio_set_level(GPIO_OUTPUT_LED_3, 1);
         // gpio_set_level(GPIO_OUTPUT_LED_4, 0);
         parameter_write_rotation(1);
-        ESP_LOGI(TAG, "remote_para.rotation = 1");}
+        //ESP_LOGI(TAG, "remote_para.rotation = 1");
+        }
     else if(value==2){
         // gpio_set_level(GPIO_OUTPUT_LED_3, 0);
         // gpio_set_level(GPIO_OUTPUT_LED_4, 1);
         parameter_write_rotation(2);
-        ESP_LOGI(TAG, "remote_para.rotation = 2");}
+        //ESP_LOGI(TAG, "remote_para.rotation = 2");
+        }
     else{
         // gpio_set_level(GPIO_OUTPUT_LED_3, 0);
         // gpio_set_level(GPIO_OUTPUT_LED_4, 0);
         parameter_write_rotation(0);
-        ESP_LOGI(TAG, "remote_para.rotation = 0");} 
+        //ESP_LOGI(TAG, "remote_para.rotation = 0");
+        } 
 }
 void nozzle_io_out(uint8_t value)
 {
@@ -100,17 +106,20 @@ void nozzle_io_out(uint8_t value)
         // gpio_set_level(GPIO_OUTPUT_LED_5, 1);
         // gpio_set_level(GPIO_OUTPUT_LED_6, 0);
         parameter_write_nozzle(1);
-        ESP_LOGI(TAG, "remote_para.nozzle = 1");}
+        //ESP_LOGI(TAG, "remote_para.nozzle = 1");
+        }
     else if(value == 2){
         // gpio_set_level(GPIO_OUTPUT_LED_5, 0);
         // gpio_set_level(GPIO_OUTPUT_LED_6, 1);
         parameter_write_nozzle(2);
-        ESP_LOGI(TAG, "remote_para.nozzle = 2");}
+        //ESP_LOGI(TAG, "remote_para.nozzle = 2");
+        }
     else{
         // gpio_set_level(GPIO_OUTPUT_LED_5, 0);
         // gpio_set_level(GPIO_OUTPUT_LED_6, 0);
         parameter_write_nozzle(0);
-        ESP_LOGI(TAG, "remote_para.nozzle = 0");}
+        //ESP_LOGI(TAG, "remote_para.nozzle = 0");
+        }
 }
 
 void remote_stop_io_out(uint8_t value , uint8_t state) //state 0 from press dom't change parameter
@@ -130,12 +139,16 @@ void remote_stop_io_out(uint8_t value , uint8_t state) //state 0 from press dom'
         if(state){
             parameter_write_emergency_stop(1);
             //gpio_set_level(GPIO_SYS_LED, 1);
-            ESP_LOGI(TAG, "remote_para.emergency_stop = 1");}}
+            //ESP_LOGI(TAG, "remote_para.emergency_stop = 1");
+            }
+            }
     else{
         if(state){
             parameter_write_emergency_stop(0);
             //gpio_set_level(GPIO_SYS_LED, 0);
-            ESP_LOGI(TAG, "remote_para.emergency_stop = 0");}}
+            //ESP_LOGI(TAG, "remote_para.emergency_stop = 0");
+            }
+            }
 }
 
 // void remote_press_output(uint8_t io_num)

@@ -81,6 +81,7 @@ int len_decoder(char *recv_buf,int recv_len,int head_len)
                 length += data_bit[j];
                 j++;
             }
+            return length;
         }
         // if(recv_buf[i] == 0x0d && recv_buf[i+1] == 0x0a && recv_buf[i+2] == 0x0d)  // && recv_buf[i+3] == 0x0a
         // {
@@ -122,20 +123,45 @@ static int http_perform_as_stream_reader(void *sbuffer,void *output_buffer)
     static int counter = 0;
     if(counter%600 == 0)
         ESP_LOGI(TAG, "content_length:%d", content_length);
-    content_length = 104;//306;  62;//
+    content_length = 62;//306;104  62;//
     int total_read_len = 0, read_len;
-    int head_len = 0;
+    //int head_len = 0;
     read_len = esp_http_client_read(client, buffer, content_length);// header
     if (read_len <= 0) {
         ESP_LOGE(TAG, "Error read data");
+    }
+    else if(read_len == 12){
+        ESP_LOGE(TAG, "error read_len = %d", read_len);
+        esp_http_client_close(client);
+        esp_http_client_cleanup(client);
+        free(buffer);
+        //vTaskDelay(5000 / portTICK_RATE_MS);    
+        return;
     }
     //buffer[read_len] = 0;
     //ESP_LOGI(TAG, "read_len = %d", read_len);
     //ESP_LOG_BUFFER_CHAR(TAG, buffer, content_length);
     // for(uint16_t i =0; i < content_length; i++)
-    //     printf("%c", buffer[i]);
-    //content_length = 500;  //in case  len_decoder = 0 read error
-    content_length = len_decoder(buffer,read_len,head_len);  //size
+    //     printf("%x", buffer[i]);
+            //content_length = 500;  //in case  len_decoder = 0 read error
+    //read_len = content_length;
+    content_length = len_decoder(buffer,read_len,0);  //size
+    //ESP_LOGI(TAG, "content_length = %d", content_length);
+    // if(content_length==0){
+    //     ESP_LOGE(TAG, "error content_length = %d", content_length);
+    //     ESP_LOG_BUFFER_CHAR(TAG, buffer, 62);
+    //     ESP_LOG_BUFFER_HEX(TAG, buffer, 62);
+    //     esp_http_client_read(client, buffer, 200);
+    //     ESP_LOG_BUFFER_CHAR(TAG, buffer, 200);
+    //     ESP_LOG_BUFFER_HEX(TAG, buffer, 200);       
+
+    //     esp_http_client_close(client);
+    //     esp_http_client_cleanup(client);
+    //     free(buffer);
+    //     //vTaskDelay(5000 / portTICK_RATE_MS);    
+    //     return;
+    // }    
+    //content_length = 10000;
     esp_http_client_read(client, sbuffer, content_length);   //frame_data
     // Data data_send;
     // BaseType_t xStatus;
@@ -145,17 +171,16 @@ static int http_perform_as_stream_reader(void *sbuffer,void *output_buffer)
     // memcpy(data_send.msg, sbuffer, content_length); 
     // xStatus = xQueueSendToFront( xqueue2, &data_send, xTicksToWait );
     
-    // int count_draw =0;
     mjpegdraw(sbuffer, content_length, output_buffer, lcd_write_bitmap);
     //     ESP_LOGI(TAG1,"count_draw:%d", count_draw++);
-    
+
     counter++;
     if(counter%30 == 1)
         ESP_LOGI(TAG1,"content_length:%d", content_length);
     // ESP_LOGI(TAG, "HTTP Stream reader Status = %d, content_length = %d",
     //             esp_http_client_get_status_code(client),
     //             content_length);   //esp_http_client_get_content_length(client)
-    //ESP_LOG_BUFFER_HEX(TAG, output_buffer, 16);   //ESP_LOG_BUFFER_HEX
+    //ESP_LOG_BUFFER_HEX(TAG, sbuffer, 512);   //ESP_LOG_BUFFER_HEX
     //}
 
     esp_http_client_close(client);
@@ -175,7 +200,7 @@ void http_test_task(void *pvParameters)
     while(1)
     {    
         http_perform_as_stream_reader(pvParameters,lcd_buffer);   
-        vTaskDelay(40 / portTICK_RATE_MS);     //50ms   14FPS   
+        vTaskDelay(30 / portTICK_RATE_MS);     //50ms   14FPS   
     }           
 }
 

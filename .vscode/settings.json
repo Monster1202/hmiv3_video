@@ -7,6 +7,7 @@
         "bat_adc.h": "c",
         "jpegd2.h": "c",
         "para_list.h": "c",
-        "mqtt_app.h": "c"
+        "mqtt_app.h": "c",
+        "usb_camera.h": "c"
     }
 }
