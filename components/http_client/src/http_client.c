@@ -200,7 +200,7 @@ void http_test_task(void *pvParameters)
     while(1)
     {    
         http_perform_as_stream_reader(pvParameters,lcd_buffer);   
-        vTaskDelay(30 / portTICK_RATE_MS);     //50ms   14FPS   
+        vTaskDelay(10 / portTICK_RATE_MS);     //50ms   14FPS   
     }           
 }
 

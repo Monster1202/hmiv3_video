@@ -192,7 +192,7 @@ void mqtt_init(void)
 
     esp_log_level_set("*", ESP_LOG_INFO);//  CONFIG_LOG_COLORS  ESP_LOG_ERROR
     esp_log_level_set("MQTT_CLIENT", ESP_LOG_VERBOSE);
-    esp_log_level_set("MQTT_EXAMPLE", ESP_LOG_INFO);////ESP_LOG_DEBUG ESP_LOG_INFO ESP_LOG_WARN
+    esp_log_level_set("MQTT_EXAMPLE", ESP_LOG_ERROR);////ESP_LOG_DEBUG ESP_LOG_INFO ESP_LOG_WARN
     esp_log_level_set("TRANSPORT_BASE", ESP_LOG_VERBOSE);
     esp_log_level_set("esp-tls", ESP_LOG_VERBOSE);
     esp_log_level_set("TRANSPORT", ESP_LOG_VERBOSE);
