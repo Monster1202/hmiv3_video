@@ -146,7 +146,22 @@ emit_message (j_common_ptr cinfo, int msg_level)
   }
 }
 
-
+// METHODDEF(void) my_emit_message(j_common_ptr cinfo, int msg_level)  
+// {  
+//     my_error_ptr myerr = (my_error_ptr) cinfo->err;  
+//     if(msg_level == -1) longjmp(myerr->setjmp_buffer, 1);  
+// } 
+// struct my_error_mgr jerr;  
+// cinfo.err = jpeg_std_error(&jerr.pub);  
+// jerr.pub.emit_message = my_emit_message;  
+ 
+// if (setjmp(jerr.setjmp_buffer) != 0)  
+// {  
+//     jpeg_destroy_decompress(&cinfo);//printf("jpeg_destroy_decompress/n");  
+ 
+//     //...  
+//     return 0;  
+// } 
 /*
  * Format a message string for the most recent JPEG error or message.
  * The message is stored into buffer, which should be at least JMSG_LENGTH_MAX

@@ -4,4 +4,4 @@ idf_component_register(
     INCLUDE_DIRS
         "include"
     PRIV_REQUIRES
-        decoder_ijg para_list main adc)
+        decoder_ijg para_list main adc bsp)

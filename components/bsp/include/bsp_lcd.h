@@ -139,6 +139,7 @@ esp_err_t bsp_lcd_init(void);
 
 esp_err_t lcd_clear(esp_lcd_panel_t *panel, uint16_t color);
 esp_err_t lcd_clear_fast(esp_lcd_panel_t *panel, uint16_t color);
+esp_err_t lcd_clear_icon_area(esp_lcd_panel_t *panel, uint16_t color);
 
 void lcd_draw_picture_test(esp_lcd_panel_t *panel);
 void lcd_speed_test(esp_lcd_panel_t *panel);

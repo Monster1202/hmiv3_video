@@ -134,6 +134,25 @@ esp_err_t lcd_clear_fast(esp_lcd_panel_t *panel, uint16_t color)
     // ESP_LOGI(TAG, "@resolution %ux%u  [time per frame=%.2fMS, fps=%.2f]", rm68120->width, rm68120->height, time_per_frame, fps);
     return ESP_OK;
 }
+esp_err_t lcd_clear_icon_area(esp_lcd_panel_t *panel, uint16_t color)
+{
+    lcd_panel_t *rm68120 = __containerof(panel, lcd_panel_t, base);
+    ESP_LOGD("lcd_debug", "lcd_clear_icon_area:%dx%d", 160, rm68120->height);
+    uint16_t *buffer = heap_caps_malloc(160 * 40 * sizeof(uint16_t), MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
+    if (NULL == buffer) {
+        ESP_LOGE(TAG, "Memory for bitmap is not enough");
+        return ESP_FAIL;
+    } else {
+        for (uint16_t i = 0; i < 160 * 40; i++) {
+            buffer[i] = color;
+        }
+        for (int y = 0; y < rm68120->height; y += 40) {
+            esp_lcd_panel_draw_bitmap(panel, 640, y, 800, y+40, buffer);
+        }
+        heap_caps_free(buffer);
+    }
+    return ESP_OK;
+}
 
 uint16_t rgb888_to_565(uint8_t r, uint8_t g, uint8_t b)
 {

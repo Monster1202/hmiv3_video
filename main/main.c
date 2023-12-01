@@ -88,8 +88,8 @@ void app_main(void)
     uint8_t *jpeg_buf = heap_caps_malloc(BOOT_ANIMATION_MAX_SIZE, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
     assert(jpeg_buf != NULL);
 
-    //xTaskCreatePinnedToCore(lcd_draw, "lcd_draw", 10240, NULL, 23, NULL,  1);  //(void *)(lcd_buffer)
-    xTaskCreatePinnedToCore(http_test_task, "http_test_task", 10240, (void *)(jpeg_buf), 24, NULL,  1);
+    xTaskCreatePinnedToCore(lcd_draw, "lcd_draw", 10240, NULL, 23, NULL,  1);  //(void *)(lcd_buffer)
+    xTaskCreatePinnedToCore(http_test_task, "http_test_task", 10240, (void *)(jpeg_buf), 24, NULL,  0);
 
 
 // #if 1

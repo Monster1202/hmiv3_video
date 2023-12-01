@@ -30,7 +30,7 @@
 
 #define BOOT_ANIMATION_MAX_SIZE (8 * 1024)
 #define MAX_HTTP_RECV_BUFFER 512
-#define MAX_HTTP_OUTPUT_BUFFER 45 * 1024
+#define MAX_HTTP_OUTPUT_BUFFER (45 * 1024)
 #define TRANSFER_BUFFER (100 * 1024)
 static const char *TAG = "HTTP_CLIENT";
 static const char *TAG1 = "lcd_draw";
@@ -61,6 +61,7 @@ void frame_send(int y_lineindex,uint8_t *send_buffer);
 void JPEGDraw(JPEGDRAW *pDraw);
 void app_jpegdec(uint8_t *mjpegbuffer, uint32_t size, uint8_t *outbuffer, lcd_write_cb lcd_cb);
 JPEGIMAGE jpg;
+static void http_rest_with_url(void);
 
 int len_decoder(char *recv_buf,int recv_len,int head_len)
 {
@@ -74,7 +75,7 @@ int len_decoder(char *recv_buf,int recv_len,int head_len)
         if(recv_buf[i] == 0x67 && recv_buf[i+1] == 0x74 && recv_buf[i+2] == 0x68) //asiic xxgth: 24754
         {
             index = i + 5;
-            while(recv_buf[index+j]!= 0x0d && recv_buf[index+j+1]!= 0x0a)
+            while(recv_buf[index+j]!= 0x0d)//&& recv_buf[index+j+1]!= 0x0a
             {
                 data_bit[j] = recv_buf[index+j]-48;    //ASCII0~9-hex0~9
                 length = length*10;
@@ -97,13 +98,13 @@ int len_decoder(char *recv_buf,int recv_len,int head_len)
 static int http_perform_as_stream_reader(void *sbuffer,void *output_buffer)
 {
     //char output_buffer[MAX_HTTP_OUTPUT_BUFFER] = {0};   // Buffer to store response of http request
-    char *buffer = malloc(MAX_HTTP_RECV_BUFFER + 1);
+    //char *buffer = malloc(MAX_HTTP_RECV_BUFFER + 1);
     //assert(buffer != NULL);
-    //char *buffer[MAX_HTTP_RECV_BUFFER] = {0};
-    if (buffer == NULL) {
-        ESP_LOGE(TAG, "Cannot malloc http receive buffer");
-        return;
-    }
+    // if (buffer == NULL) {
+    //     ESP_LOGE(TAG, "Cannot malloc http receive buffer");
+    //     return;
+    // }
+    char buffer[MAX_HTTP_RECV_BUFFER] = {0};
     esp_http_client_config_t config = {
         .url = http_get_URL,//"http://10.42.0.1:8080/?action=stream",////"http://172.16.170.189:8080/stream?topic=/usb_cam/image_raw",//"http://10.42.0.1:8080/?action=stream",//"http://10.42.0.1:1111/video_feed",//"http://172.16.171.97:8080/?action=stream","http://10.0.2.15:8080/?action=stream",//"http://i2.hdslb.com/bfs/face/bce14f5e3af4bca480fc7de227986ba304507078.jpg",////"http://httpbin.org/get",
     };
@@ -114,7 +115,7 @@ static int http_perform_as_stream_reader(void *sbuffer,void *output_buffer)
         ESP_LOGE(TAG, "Failed to open HTTP connection: %s", esp_err_to_name(err));
         esp_http_client_close(client);
         esp_http_client_cleanup(client);
-        free(buffer);
+        //free(buffer);
         vTaskDelay(5000 / portTICK_RATE_MS);    
         return;
     }       
@@ -134,7 +135,7 @@ static int http_perform_as_stream_reader(void *sbuffer,void *output_buffer)
         ESP_LOGE(TAG, "error read_len = %d", read_len);
         esp_http_client_close(client);
         esp_http_client_cleanup(client);
-        free(buffer);
+        //free(buffer);
         //vTaskDelay(5000 / portTICK_RATE_MS);    
         return;
     }
@@ -142,7 +143,7 @@ static int http_perform_as_stream_reader(void *sbuffer,void *output_buffer)
     //ESP_LOGI(TAG, "read_len = %d", read_len);
     //ESP_LOG_BUFFER_CHAR(TAG, buffer, content_length);
     // for(uint16_t i =0; i < content_length; i++)
-    //     printf("%x", buffer[i]);
+    //     printf("%c", buffer[i]);
             //content_length = 500;  //in case  len_decoder = 0 read error
     //read_len = content_length;
     content_length = len_decoder(buffer,read_len,0);  //size
@@ -160,21 +161,26 @@ static int http_perform_as_stream_reader(void *sbuffer,void *output_buffer)
     //     free(buffer);
     //     //vTaskDelay(5000 / portTICK_RATE_MS);    
     //     return;
-    // }    
-    //content_length = 10000;
-    esp_http_client_read(client, sbuffer, content_length);   //frame_data
-    // Data data_send;
-    // BaseType_t xStatus;
-    // const TickType_t xTicksToWait = pdMS_TO_TICKS(50);
-    // data_send.sender = content_length;
-    // data_send.msg = heap_caps_malloc(TRANSFER_BUFFER, MALLOC_CAP_SPIRAM |  MALLOC_CAP_8BIT);
-    // memcpy(data_send.msg, sbuffer, content_length); 
-    // xStatus = xQueueSendToFront( xqueue2, &data_send, xTicksToWait );
+    // }  
+    Data data_send;
+    BaseType_t xStatus;
+    const TickType_t xTicksToWait = pdMS_TO_TICKS(50);
+    data_send.sender = content_length;
+    data_send.msg = heap_caps_malloc(TRANSFER_BUFFER, MALLOC_CAP_SPIRAM |  MALLOC_CAP_8BIT);  
+    if(content_length < 10000){
+        esp_http_client_read(client, sbuffer, content_length);   //frame_data
+        memcpy(data_send.msg, sbuffer, content_length); 
+    }
+    else{
+        esp_http_client_read(client, sbuffer, content_length+1);   //frame_data
+        memcpy(data_send.msg, sbuffer+1, content_length); 
+    }  
+    xStatus = xQueueSendToFront( xqueue2, &data_send, xTicksToWait );
     
-    mjpegdraw(sbuffer, content_length, output_buffer, lcd_write_bitmap);
+    //mjpegdraw(sbuffer, content_length, output_buffer, lcd_write_bitmap);
     //     ESP_LOGI(TAG1,"count_draw:%d", count_draw++);
 
-    counter++;
+    
     if(counter%30 == 1)
         ESP_LOGI(TAG1,"content_length:%d", content_length);
     // ESP_LOGI(TAG, "HTTP Stream reader Status = %d, content_length = %d",
@@ -185,22 +191,23 @@ static int http_perform_as_stream_reader(void *sbuffer,void *output_buffer)
 
     esp_http_client_close(client);
     esp_http_client_cleanup(client);
-    free(buffer);
+    //free(buffer);
+    counter++;
     return content_length;
 }
 
 void http_test_task(void *pvParameters)
 {
-    uint8_t *lcd_buffer = (uint8_t *)heap_caps_malloc(DEMO_MAX_TRANFER_SIZE, MALLOC_CAP_DMA | MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
-    assert(lcd_buffer != NULL);
+    // uint8_t *lcd_buffer = (uint8_t *)heap_caps_malloc(DEMO_MAX_TRANFER_SIZE, MALLOC_CAP_DMA | MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
+    // assert(lcd_buffer != NULL);
     ESP_LOGI(TAG, "START http example");
     vTaskDelay(5000 / portTICK_RATE_MS); 
-    print_heapsize();
+    //print_heapsize();
     //xqueue2 = xQueueCreate( 1, sizeof(Data));
     while(1)
     {    
-        http_perform_as_stream_reader(pvParameters,lcd_buffer);   
-        vTaskDelay(10 / portTICK_RATE_MS);     //50ms   14FPS   
+        http_perform_as_stream_reader(pvParameters,0);   
+        vTaskDelay(40 / portTICK_RATE_MS);     //50ms   14FPS   
     }           
 }
 
@@ -214,7 +221,7 @@ void lcd_draw(void *pvParameters)
     vTaskDelay(4000 / portTICK_RATE_MS); 
     uint8_t *output_buffer = (uint8_t *)heap_caps_malloc(DEMO_MAX_TRANFER_SIZE, MALLOC_CAP_DMA | MALLOC_CAP_INTERNAL |  MALLOC_CAP_8BIT); //MALLOC_CAP_DMA | MALLOC_CAP_INTERNAL |
     assert(output_buffer != NULL);
-    print_heapsize();
+    //print_heapsize();
     xqueue2 = xQueueCreate( 1, sizeof(Data));
     int cnt = 0;
     while(1)
@@ -229,13 +236,12 @@ void lcd_draw(void *pvParameters)
             //app_jpegdec((uint8_t *)data_get.msg, data_get.sender, output_buffer, lcd_write_bitmap);
 
             mjpegdraw((uint8_t *)data_get.msg, data_get.sender, output_buffer, lcd_write_bitmap);
-            vTaskDelay(20 / portTICK_RATE_MS);
+            vTaskDelay(10 / portTICK_RATE_MS);
 
             free(data_get.msg); 
             //ESP_LOGI(TAG1, "draw_lcd");
         }
     }   
-
 }
 
 void frame_send(int y_lineindex,uint8_t *send_buffer)
@@ -263,7 +269,7 @@ void app_jpegdec(uint8_t *mjpegbuffer, uint32_t size, uint8_t *outbuffer, lcd_wr
     {
         jpg.pDitherBuffer = outbuffer;//
         jpg.ucPixelType = RGB565_LITTLE_ENDIAN;//RGB565_BIG_ENDIAN;//RGB565_LITTLE_ENDIAN;//FOUR_BIT_DITHERED;   
-	if (JPEG_decode(&jpg, 0, 0, JPEG_SCALE_HALF)) { // full size   
+	if (JPEG_decode(&jpg, 0, 0, JPEG_AUTO_ROTATE)) { // full size   
         //printf("full sized decode \n");
 	}
 	else
@@ -359,7 +365,7 @@ static void http_rest_with_url(void)
      * If URL as well as host and path parameters are specified, values of host and path will be considered.
      */
     esp_http_client_config_t config = {
-        .host = "httpbin.org",//"http://172.16.171.97:8080",//
+        .host = "httpbin.org",//"http://10.42.0.1:8090/test.mjpg",//
         .path = "/get",
         .query = "esp",
         .event_handler = _http_event_handler,

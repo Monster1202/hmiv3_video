@@ -8,6 +8,11 @@
         "jpegd2.h": "c",
         "para_list.h": "c",
         "mqtt_app.h": "c",
-        "usb_camera.h": "c"
+        "usb_camera.h": "c",
+        "atomic": "c",
+        "*.tcc": "c",
+        "iomanip": "c",
+        "istream": "c",
+        "ostream": "c"
     }
 }

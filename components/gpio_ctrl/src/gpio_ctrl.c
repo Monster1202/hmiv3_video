@@ -422,7 +422,6 @@ void gpio_init(void)
     //gpio_isr_handler_add(GPIO_INPUT_IO_0, gpio_isr_handler, (void*) GPIO_INPUT_IO_0);
 
     ESP_LOGI(TAG, "Minimum free heap size: %d bytes", esp_get_minimum_free_heap_size());
-
 }
 // void gpio_init(void)
 // {

@@ -6,6 +6,7 @@
 #include "para_list.h"
 #include "esp_spiffs.h"
 #include "bat_adc.h"
+#include "bsp_lcd.h"
 
 #define icon1_x 663
 #define icon1_y 25
@@ -54,9 +55,10 @@ void lcd_icon_task(void)
     assert(lcd_buffer != NULL);
     adc_init();
     int cnt = 0;
+    int refresh = 1;
     while(1){
         get_remote_parameter(&remote_buf);
-        if(remote_buf.wifi_connection != former_state.wifi_connection){
+        if(remote_buf.wifi_connection != former_state.wifi_connection || refresh){
             if(remote_buf.wifi_connection!=0){
                 jpg_icon_draw(jpg_buffer,lcd_buffer,102,icon1_x,icon1_y,icon_size1,icon_size1);  //wifi
             }
@@ -64,18 +66,18 @@ void lcd_icon_task(void)
                 jpg_icon_draw(jpg_buffer,lcd_buffer,100,icon1_x,icon1_y,icon_size1,icon_size1);  //wifi
             }
         }
-        if(remote_buf.battery != former_state.battery){
+        if(remote_buf.battery != former_state.battery || refresh){
             if(remote_buf.battery>=1700){
                 jpg_icon_draw(jpg_buffer,lcd_buffer,108,icon2_x,icon1_y,icon_size1,icon_size1);  //bat 
             }
             else if(remote_buf.battery>=1500){
                 jpg_icon_draw(jpg_buffer,lcd_buffer,106,icon2_x,icon1_y,icon_size1,icon_size1);  //bat
             }
-            else if(remote_buf.battery<=1500){
+            else{   // if(remote_buf.battery<=1500)
                 jpg_icon_draw(jpg_buffer,lcd_buffer,104,icon2_x,icon1_y,icon_size1,icon_size1);  //bat
             }
         }
-        if(remote_buf.nozzle != former_state.nozzle){
+        if(remote_buf.nozzle != former_state.nozzle || refresh){
             if(remote_buf.nozzle == 2){
                 jpg_icon_draw(jpg_buffer,lcd_buffer,112,icon1_x,icon2_y,34,40);  //nozzle-bubble
                 jpg_icon_draw(jpg_buffer,lcd_buffer,114,icon2_x,icon2_y,34,34);  //nozzle-water 0 
@@ -84,65 +86,71 @@ void lcd_icon_task(void)
                 jpg_icon_draw(jpg_buffer,lcd_buffer,110,icon1_x,icon2_y,34,34);  //nozzle-bubble 0
                 jpg_icon_draw(jpg_buffer,lcd_buffer,116,icon2_x,icon2_y,34,40);  //nozzle-water
             }
-            else if(remote_buf.nozzle == 0){
+            else{   // if(remote_buf.nozzle == 0)
                 jpg_icon_draw(jpg_buffer,lcd_buffer,110,icon1_x,icon2_y,34,34);  //nozzle-bubble 0
                 jpg_icon_draw(jpg_buffer,lcd_buffer,114,icon2_x,icon2_y,34,34);  //nozzle-water 0 
             }
         }
-        if(remote_buf.centralizer != former_state.centralizer){
+        if(remote_buf.centralizer != former_state.centralizer || refresh){
             if(remote_buf.centralizer == 2){
                 jpg_icon_draw(jpg_buffer,lcd_buffer,124,icon1_x,icon3_y,38,38); //centralizer 
             }
             else if(remote_buf.centralizer == 1){
                 jpg_icon_draw(jpg_buffer,lcd_buffer,122,icon1_x,icon3_y,38,38); //centralizer
             }
-            else if(remote_buf.centralizer == 0){
+            else{    // if(remote_buf.centralizer == 0)
                 jpg_icon_draw(jpg_buffer,lcd_buffer,120,icon1_x,icon3_y,34,34); //centralizer
             }
         }
-        if(remote_buf.rotation != former_state.rotation){
+        if(remote_buf.rotation != former_state.rotation || refresh){
             if(remote_buf.rotation == 2){
                 jpg_icon_draw(jpg_buffer,lcd_buffer,134,icon2_x,icon3_y,38,38); //rotation  
             }
             else if(remote_buf.rotation == 1){
                 jpg_icon_draw(jpg_buffer,lcd_buffer,132,icon2_x,icon3_y,38,38); //rotation  
             }
-            else if(remote_buf.rotation == 0){
+            else{    // if(remote_buf.rotation == 0)
                 jpg_icon_draw(jpg_buffer,lcd_buffer,130,icon2_x,icon3_y,34,34); //rotation  
             }
         }
-        if(remote_buf.water != former_state.water){
+        if(remote_buf.water != former_state.water || refresh){
             if(remote_buf.water == 1){
                 jpg_icon_draw(jpg_buffer,lcd_buffer,144,icon2_x,330,18,18); //senser-water 
             }
-            else if(remote_buf.water == 0){
+            else{  // if(remote_buf.water == 0)
                 jpg_icon_draw(jpg_buffer,lcd_buffer,142,icon2_x,330,18,18); //senser-water   
             }
         }
-        if(remote_buf.pressure_alarm != former_state.pressure_alarm){
+        if(remote_buf.pressure_alarm != former_state.pressure_alarm || refresh){
             if(remote_buf.pressure_alarm == 0){
                 jpg_icon_draw(jpg_buffer,lcd_buffer,144,icon2_x,380,18,18); //senser-pressure
-            }
-            else if(remote_buf.pressure_alarm == 1){
-                jpg_icon_draw(jpg_buffer,lcd_buffer,142,icon2_x,380,18,18); //senser-pressure 0   
+            }  
+            else{    // if(remote_buf.pressure_alarm == 1)
+                jpg_icon_draw(jpg_buffer,lcd_buffer,142,icon2_x,380,18,18); //senser-pressure 0  
             }
         }
-        if(remote_buf.sta_brush != former_state.sta_brush){
+        if(remote_buf.sta_brush != former_state.sta_brush || refresh){
             if(remote_buf.sta_brush == 2){
                 jpg_icon_draw(jpg_buffer,lcd_buffer,142,icon2_x,430,18,18); //status-brush  
             }
             else if(remote_buf.sta_brush == 1){
                 jpg_icon_draw(jpg_buffer,lcd_buffer,144,icon2_x,430,18,18); //status-brush     
             }
-            else if(remote_buf.sta_brush == 0){
+            else{      // if(remote_buf.sta_brush == 0)
                 jpg_icon_draw(jpg_buffer,lcd_buffer,140,icon2_x,430,18,18); //status-brush     
             }
         }
         get_remote_parameter(&former_state);
         vTaskDelay(100 / portTICK_RATE_MS);
         cnt++;
+        refresh = 0;
         if(cnt % 200 == 1){
             bat_adc_get();
+        }  
+        else if(cnt % 3000 == 2999){     
+            refresh = 1;
+            ESP_LOGI(TAG, "lcd_clear_icon_area");
+            lcd_clear_icon_area(lcd_panel, COLOR_BLACK);
         }
     }
     free(lcd_buffer);
@@ -186,6 +194,7 @@ void spiff_init(void)
     // esp_vfs_spiffs_unregister(conf.partition_label);
     // ESP_LOGI(TAG, "SPIFFS unmounted");
 }
+
 
 
 

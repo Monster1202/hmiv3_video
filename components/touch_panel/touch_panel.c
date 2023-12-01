@@ -90,8 +90,8 @@ void touch_input(void)
             buf_y = touchpanel.y;
         }
         //cnt++;
-        // if(touchpanel.state ==1 && touchpanel.x == 4095 && touchpanel.y == -3615)
-        //     touchpad_init();
+        if(touchpanel.state ==1 && touchpanel.x == 4095 && touchpanel.y == -3615)
+            vTaskDelay(5000 / portTICK_RATE_MS);
     }
 }
 /*Initialize your touchpad*/
